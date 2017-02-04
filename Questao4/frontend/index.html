@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Welcome to Vue</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="css.css">
+    <script src="https://unpkg.com/vue/dist/vue.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue-resource/1.1.2/vue-resource.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container" id="app">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="todolist not-done">
+                    <h1>Task List</h1>
+                    <div class="row">
+                        <div class="form-group col-md-9">
+                            <input type="text" class="form-control" v-model="task.name" placeholder="Name">
+                        </div>
+                        <div class="form-group col-md-3">
+                            <input type="text" class="form-control" v-model="task.priority" placeholder="Priority">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <textarea class="form-control" rows="2" placeholder="Description" v-model="task.description"></textarea>
+                    </div>
+                    <button v-on:click="saveTask" class="btn btn-success" :disabled="lockAddNewButton">{{lockAddNewButton }} Add New Task</button>
+                    <hr>
+                    <ul id="sortable" class="list-unstyled">
+                        <li class="ui-state-default" v-for="task in tasksToDo">
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" v-on:click="doneTask(task)"/> {{ task.name}}
+                                    <br>
+                                    {{ task.description }}
+                                </label>
+                            </div>
+                        </li>
+                    </ul>
+                    <div class="todo-footer">
+                        <strong><span class="count-todos">{{ tasksToDo.length }}</span></strong> Items Left
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="todolist">
+                    <h1>Already Done</h1>
+                    <ul id="done-items" class="list-unstyled">
+                        <li v-for="task in tasksDone">
+                            {{ task.name }}
+                            <br>
+                            {{ task.description }}
+                            <button class="remove-item btn btn-default btn-xs pull-right">
+                                <span class="glyphicon glyphicon-remove"></span>
+                            </button>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        new Vue({
+            http: {
+                root: 'http://localhost:8001',
+                headers: {
+                    'Access-Control-Allow-Origin' : '*'
+                }
+            },
+            el: '#app',
+            data: {
+                tasksToDo: [],
+                tasksDone: [],
+                task: {},
+                lockAddNewButton: false
+            },
+            mounted() {
+                this.getTasksToDo();
+                this.getTasksDone();
+            },
+            methods: {
+                getTasksToDo: function (){
+                    var self = this;
+                    this.$http.get('tasks.json').then(response => {
+                        self.tasksToDo = response.body.tasks;
+                    }, response => {
+
+                    });
+                },
+                getTasksDone: function (){
+                    var self = this;
+                    this.$http.get('tasks.json?type=done').then(response => {
+                        self.tasksDone = response.body.tasks;
+                    }, response => {
+
+                    });
+                },
+                saveTask: function (){
+                    var self = this;
+                    this.$http.post('tasks.json', this.task, {before: function(request){ self.lockAddNewButton = true; }}).then(response => {
+                        self.task = {};
+                        self.tasksToDo.push(response.body.task);
+                    }, response => {
+
+                    });   
+                },
+                doneTask: function (task){
+                    var self = this;
+                    task.priority = 1;
+                    this.$http.put('tasks.json', task).then(response => {
+                        self.tasksToDo.push(response.body.task);
+                    }, response => {
+
+                    });   
+                }
+            }
+        })
+    </script>
+</body>
+</html>

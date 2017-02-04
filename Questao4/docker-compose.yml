@@ -1,0 +1,30 @@
+php:
+  build: .
+  ports:
+   - "8001:80"
+  volumes:
+   - ./api:/var/www/html
+  links:
+   - db
+db:
+  image: mysql:5.7
+  ports:
+   - "3306:3306"
+  volumes:
+   - /var/lib/mysql
+  environment:
+   - MYSQL_ROOT_PASSWORD=root
+   - MYSQL_DATABASE=root
+composer:
+  image: composer:1.3
+  tty: true
+  volumes_from: 
+    - php
+  working_dir: /var/www/html
+  command: install --ignore-platform-reqs
+httpd:
+  image: httpd:2.4
+  ports:
+   - "8002:80"
+  volumes:
+   - ./frontend:/usr/local/apache2/htdocs
