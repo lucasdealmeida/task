@@ -3,6 +3,6 @@
         "squizlabs/php_codesniffer": "*"
     },
     "autoload": {
-        "psr-4": {"Questao1\\": "Questao1/"}
+        "psr-4": {"Questao1\\": "Questao1/", "Questao3\\": "Questao3/"}
     }
 }
