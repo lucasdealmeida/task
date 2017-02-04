@@ -50,7 +50,7 @@ Router::scope('/', function ($routes) {
 	        'cors' => [
 	            'action' => 'cors',
 	            'method' => 'OPTIONS',
-	            'path' => '/'
+	            'path' => '*'
 	        ],
 	    ]
     ]);

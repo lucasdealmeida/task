@@ -9,6 +9,9 @@ class CreateTasksTable extends AbstractMigration
         $table->addColumn('name', 'string')
             ->addColumn('description', 'text')
             ->addColumn('priority', 'integer')
+            ->addColumn('done', 'boolean'[
+                'default' => false
+            ]);
             ->create();
     }
  

@@ -21,9 +21,9 @@ class TasksController extends AppController
     public function index()
     {
         if (isset($this->request->query['type'])){
-            $this->set('tasks', $this->Tasks->find('all')->where(['priority =' => 1]));
+            $this->set('tasks', $this->Tasks->find('all')->where(['done =' => 1])->order(['priority' => 'DESC']));
         }else{
-            $this->set('tasks', $this->Tasks->find('all'));
+            $this->set('tasks', $this->Tasks->find('all')->where(['done =' => 0])->order(['priority' => 'DESC']));
         }
     }
 
@@ -47,6 +47,7 @@ class TasksController extends AppController
     public function add()
     {
         $task = $this->Tasks->newEntity($this->request->data);
+        $task->done = 0;
         $return = [];
         if ($task->errors()){
             $return = [

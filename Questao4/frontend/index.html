@@ -6,6 +6,9 @@
     <link rel="stylesheet" href="css.css">
     <script src="https://unpkg.com/vue/dist/vue.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue-resource/1.1.2/vue-resource.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/sortable/1.4.2/Sortable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.13.1/lodash.min.js"></script>
+    <script src="https://cdn.rawgit.com/David-Desmaisons/Vue.Draggable/master/dist/vuedraggable.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 </head>
@@ -26,18 +29,32 @@
                     <div class="form-group">
                         <textarea class="form-control" rows="2" placeholder="Description" v-model="task.description"></textarea>
                     </div>
-                    <button v-on:click="saveTask" class="btn btn-success" :disabled="lockAddNewButton">{{lockAddNewButton }} Add New Task</button>
+                    <button v-on:click="saveTask" class="btn btn-success" :disabled="lockButton">
+                        <span v-if="!task.id">Add New Task</span>
+                        <span v-else>Edit Task</span>
+                    </button>
+                    <button v-on:click="task = {}" v-if="task.id" class="btn btn-default" :disabled="lockButton">
+                        Cancel
+                    </button>
                     <hr>
                     <ul id="sortable" class="list-unstyled">
-                        <li class="ui-state-default" v-for="task in tasksToDo">
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" v-on:click="doneTask(task)"/> {{ task.name}}
-                                    <br>
-                                    {{ task.description }}
-                                </label>
-                            </div>
-                        </li>
+                        <draggable class="dragArea" :list="tasksToDo" :options="{group:'_tasks'}" @change="dragTaskToDoUpdate">
+                            <li class="ui-state-default" v-for="task in listToDo">
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" v-model="task.done" v-bind:true-value="1" v-bind:false-value="0" v-on:click="doneTask(task)"/> {{ task.name}}
+                                        <br>
+                                        {{ task.description }}
+                                    </label>
+                                    <button class="remove-item btn btn-default btn-xs pull-right" v-on:click="removeTask(task)">
+                                        <span class="glyphicon glyphicon-remove"></span>
+                                    </button>
+                                    <button class="remove-item btn btn-default btn-xs pull-right" v-on:click="editTask(task)">
+                                        <span class="glyphicon glyphicon-pencil"></span>
+                                    </button>
+                                </div>
+                            </li>
+                        </draggable>
                     </ul>
                     <div class="todo-footer">
                         <strong><span class="count-todos">{{ tasksToDo.length }}</span></strong> Items Left
@@ -48,14 +65,18 @@
                 <div class="todolist">
                     <h1>Already Done</h1>
                     <ul id="done-items" class="list-unstyled">
-                        <li v-for="task in tasksDone">
-                            {{ task.name }}
-                            <br>
-                            {{ task.description }}
-                            <button class="remove-item btn btn-default btn-xs pull-right">
-                                <span class="glyphicon glyphicon-remove"></span>
-                            </button>
+                        <draggable class="dragArea" :list="tasksDone" :options="{group:'_tasks'}">
+                            <li class="ui-state-default" v-for="task in listDone">
+                                <div class="checkbox">
+                                    {{ task.name}}
+                                    <br>
+                                    {{ task.description }}
+                                    <button class="remove-item btn btn-default btn-xs pull-right" v-on:click="removeTask(task)">
+                                        <span class="glyphicon glyphicon-remove"></span>
+                                    </button>
+                                </div>
                             </li>
+                        </draggable>
                     </ul>
                 </div>
             </div>
@@ -74,11 +95,19 @@
                 tasksToDo: [],
                 tasksDone: [],
                 task: {},
-                lockAddNewButton: false
+                lockButton: false
             },
             mounted() {
                 this.getTasksToDo();
                 this.getTasksDone();
+            },
+            computed: {
+                listToDo() {
+                    return _.orderBy(this.tasksToDo, ['priority', 'name'], ['desc', 'asc']); 
+                },
+                listDone() {
+                    return _.orderBy(this.tasksDone, ['priority', 'name'], ['desc', 'asc']); 
+                },
             },
             methods: {
                 getTasksToDo: function (){
@@ -99,22 +128,70 @@
                 },
                 saveTask: function (){
                     var self = this;
-                    this.$http.post('tasks.json', this.task, {before: function(request){ self.lockAddNewButton = true; }}).then(response => {
-                        self.task = {};
-                        self.tasksToDo.push(response.body.task);
+                    if (this.task.id){
+                        this.$http.put('tasks/'+ this.task.id +'.json', this.task, {before: function(request){ self.lockButton = true; }}).then(response => {
+                            self.tasksToDo[self.tasksToDo.indexOf(this.task)] = response.body.task;
+                            self.task = {};
+                            self.lockButton = false;
+                        }, response => {
+
+                        });   
+                    }else{
+                        this.$http.post('tasks.json', this.task, {before: function(request){ self.lockButton = true; }}).then(response => {
+                            self.task = {};
+                            self.tasksToDo.push(response.body.task);
+                            self.lockButton = false;
+                        }, response => {
+
+                        });   
+                    }
+                },
+                doneTask: function (task){
+                    var self = this;
+                    this.$http.put('tasks/'+task.id+'.json', task).then(response => {
+                        self.tasksToDo.splice(self.tasksToDo.indexOf(task), 1);
+                        self.tasksDone.push(response.body.task);
                     }, response => {
 
                     });   
                 },
-                doneTask: function (task){
+                removeTask: function (task){
                     var self = this;
-                    task.priority = 1;
-                    this.$http.put('tasks.json', task).then(response => {
-                        self.tasksToDo.push(response.body.task);
+                    this.$http.delete('tasks/'+task.id+'.json').then(response => {
+                        if (task.done){
+                            self.tasksDone.splice(self.tasksDone.indexOf(task), 1);
+                        }else{
+                            self.tasksToDo.splice(self.tasksToDo.indexOf(task), 1);
+                        }
                     }, response => {
 
                     });   
-                }
+                },
+                editTask: function (task){
+                    this.task = task;
+                },
+                dragTaskToDoUpdate: function(event){
+                    var task = false;
+                    if (event.removed){
+                        event.removed.element.done = 1;
+                        task = event.removed.element;
+                        task.done = 1;
+                    }else if (event.added){
+                        task = event.added.element;
+                        task.done = 0;
+                    }else if (event.moved){
+                        task = event.moved.element;
+                        if (task.done){
+                            last_priority = this.tasksDone[event.moved.oldIndex].priority + 1;
+                        }else{
+                            last_priority = this.tasksToDo[event.moved.oldIndex].priority + 1;
+                        }
+                        task.priority = last_priority;
+                    }
+                    if (!task){
+                        this.$http.put('tasks/'+ task.id +'.json', task);
+                    }
+                },
             }
         })
     </script>
