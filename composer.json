@@ -1,6 +1,8 @@
 {
     "require": {
-        "squizlabs/php_codesniffer": "*"
+        "squizlabs/php_codesniffer": "*",
+        "phpunit/phpunit": "6.0.*",
+        "mikey179/vfsStream": "~1"
     },
     "autoload": {
         "psr-4": {"Questao1\\": "Questao1/", "Questao3\\": "Questao3/"}

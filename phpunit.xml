@@ -1,0 +1,8 @@
+<phpunit colors="true">
+	<testsuites>
+		<testsuite name="Testando Questões">
+      		<file>Tests/Questao1Test.php</file>
+      		<file>Tests/Questao3Test.php</file>
+    	</testsuite>
+  	</testsuites>
+</phpunit>
