@@ -5,10 +5,12 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
     <link rel="stylesheet" href="css.css">
     <script src="https://unpkg.com/vue/dist/vue.js"></script>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue-resource/1.1.2/vue-resource.min.js"></script>
     <script src="https://cdn.jsdelivr.net/sortable/1.4.2/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.13.1/lodash.min.js"></script>
     <script src="https://cdn.rawgit.com/David-Desmaisons/Vue.Draggable/master/dist/vuedraggable.min.js"></script>
+    
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 </head>
@@ -38,11 +40,12 @@
                     </button>
                     <hr>
                     <ul id="sortable" class="list-unstyled">
-                        <draggable class="dragArea" :list="tasksToDo" :options="{group:'_tasks'}" @change="dragTaskToDoUpdate">
+                        <draggable  class="dragArea" :list="listToDo" :options="{group:'_tasks'}" @change="dragTaskToDoUpdate">
                             <li class="ui-state-default" v-for="task in listToDo">
                                 <div class="checkbox">
                                     <label>
-                                        <input type="checkbox" v-model="task.done" v-bind:true-value="1" v-bind:false-value="0" v-on:click="doneTask(task)"/> {{ task.name}}
+                                        <input type="checkbox" v-model="task.done" v-bind:true-value="1" v-bind:false-value="0" v-on:click="doneTask(task)"/> 
+                                        <span class="label label-default">{{ task.priority }}</span> {{ task.name}}
                                         <br>
                                         {{ task.description }}
                                     </label>
@@ -65,7 +68,7 @@
                 <div class="todolist">
                     <h1>Already Done</h1>
                     <ul id="done-items" class="list-unstyled">
-                        <draggable class="dragArea" :list="tasksDone" :options="{group:'_tasks'}">
+                        <draggable class="dragArea" :list="listDone" :options="{group:'_tasks'}" @change="dragTaskDoneUpdate">
                             <li class="ui-state-default" v-for="task in listDone">
                                 <div class="checkbox">
                                     {{ task.name}}
@@ -82,7 +85,27 @@
             </div>
         </div>
     </div>
+    <div class="modal fade" id="myModal" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="myModalLabel"><i class="fa fa-clock-o"></i> Please Wait</h4>
+                </div>
+                <div class="modal-body center-block">
+                    <div class="progress">
+                        <div class="progress-bar bar" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%;"></div>
+                    </div>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
     <script>
+        Vue.http.interceptors.push(function(request, next) {
+            $('#myModal').modal('show');
+            next(function(response) {
+                $('#myModal').modal('hide');
+            });
+        });
         new Vue({
             http: {
                 root: 'http://localhost:8001',
@@ -102,11 +125,21 @@
                 this.getTasksDone();
             },
             computed: {
-                listToDo() {
-                    return _.orderBy(this.tasksToDo, ['priority', 'name'], ['desc', 'asc']); 
+                listToDo: {
+                    get: function(){
+                        return _.orderBy(this.tasksToDo, ['priority', 'name'], ['desc', 'asc']); 
+                    },
+                    set: function (newValue) {
+                        this.tasksToDo.push(newValue);
+                    }
                 },
-                listDone() {
-                    return _.orderBy(this.tasksDone, ['priority', 'name'], ['desc', 'asc']); 
+                listDone: {
+                    get: function(){
+                        return _.orderBy(this.tasksDone, ['priority', 'name'], ['desc', 'asc']); 
+                    },
+                    set: function (newValue) {
+                        this.tasksDone.push(newValue);
+                    }
                 },
             },
             methods: {
@@ -130,7 +163,8 @@
                     var self = this;
                     if (this.task.id){
                         this.$http.put('tasks/'+ this.task.id +'.json', this.task, {before: function(request){ self.lockButton = true; }}).then(response => {
-                            self.tasksToDo[self.tasksToDo.indexOf(this.task)] = response.body.task;
+                            self.tasksToDo.splice(self.task.index, 1);
+                            self.tasksToDo.push(response.body.task);
                             self.task = {};
                             self.lockButton = false;
                         }, response => {
@@ -168,7 +202,9 @@
                     });   
                 },
                 editTask: function (task){
-                    this.task = task;
+                    index = this.tasksToDo.indexOf(task);
+                    this.task = _.clone(task);
+                    this.task.index = index;
                 },
                 dragTaskToDoUpdate: function(event){
                     var task = false;
@@ -176,22 +212,30 @@
                         event.removed.element.done = 1;
                         task = event.removed.element;
                         task.done = 1;
+                        this.listDone = task;
                     }else if (event.added){
                         task = event.added.element;
                         task.done = 0;
+                        this.listTodo = task;
                     }else if (event.moved){
                         task = event.moved.element;
-                        if (task.done){
-                            last_priority = this.tasksDone[event.moved.oldIndex].priority + 1;
-                        }else{
-                            last_priority = this.tasksToDo[event.moved.oldIndex].priority + 1;
-                        }
-                        task.priority = last_priority;
+                        task.priority = this.listToDo[event.moved.oldIndex].priority + 1;
+                        this.tasksToDo.splice(this.tasksToDo.indexOf(task), 1);
+                        this.tasksToDo.push(task);
                     }
-                    if (!task){
+                    if (task !== false){
                         this.$http.put('tasks/'+ task.id +'.json', task);
                     }
                 },
+                dragTaskDoneUpdate: function(event){
+                    if (event.moved){
+                        var task = event.moved.element;
+                        task.priority = this.tasksDone[event.moved.oldIndex].priority + 1;
+                        this.tasksDone.splice(this.tasksDone.indexOf(task), 1);
+                        this.listDone = task;
+                        this.$http.put('tasks/'+ task.id +'.json', task);
+                    }
+                }
             }
         })
     </script>
