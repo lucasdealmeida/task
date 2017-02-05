@@ -60,6 +60,8 @@ $ vendor/bin/phpcs --standard=PSR1 Questao3/
 - [x] Drag and Drop
 - [x] Responsivo
 
+Caso tenha algum serviço usando a porta padrão do MySQL (3306) é melhor para-lo para evitar conflito com o container.
+
 #### Instalar o Docker ####
 ```
 https://www.docker.com/products/docker
