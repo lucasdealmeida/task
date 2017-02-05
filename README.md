@@ -77,7 +77,7 @@ $ docker-compose up -d
 ```
 irá executar e rodar o processo em background
 
-#### Editar a configuração de banco de dados ```config/app.php``` ####
+#### Editar a configuração de banco de dados ```Questao4/api/config/app.php``` ####
 ```php
 'host' => 'task_db',
 'username' => 'root',
@@ -86,7 +86,7 @@ irá executar e rodar o processo em background
 ```
 
 
-#### Rodar os migrations ####
+#### Rodar os migrations dentro da pasta ``` Questao4 ``` ####
 ```bash
 $ docker exec task_php api/bin/cake migrations migrate
 ```
