@@ -77,7 +77,7 @@ $ docker-compose up -d
 ```
 irá executar e rodar o processo em background
 
-#### Editar o arquivo ```config/app.php``` ####
+#### Editar a configuração de banco de dados ```config/app.php``` ####
 ```php
 'host' => 'task_db',
 'username' => 'root',
