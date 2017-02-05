@@ -1,4 +1,5 @@
 php:
+  container_name: task_php
   build: .
   ports:
    - "8001:80"
@@ -7,6 +8,7 @@ php:
   links:
    - db
 db:
+  container_name: task_db
   image: mysql:5.7
   ports:
    - "3306:3306"
@@ -17,12 +19,12 @@ db:
    - MYSQL_DATABASE=root
 composer:
   image: composer:1.3
-  tty: true
   volumes_from: 
     - php
   working_dir: /var/www/html
   command: install --ignore-platform-reqs
 httpd:
+  container_name: task_frontend
   image: httpd:2.4
   ports:
    - "8002:80"
