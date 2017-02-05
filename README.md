@@ -4,7 +4,7 @@
 $ composer install
 ```
 
-#### Subir o servidor pelo PHP #### 
+#### Subir o servidor pelo PHP ####
 ```bash
 $ php -S localhost:8000 -t Questao1/
 ```
@@ -18,11 +18,26 @@ $ php -S localhost:8000 -t Questao1/
 $ vendor/bin/phpunit --filter Questao1Test
 ```
 
-##### Instruções para rodar a Questão 3 ####
-### Importar o arquivo de SQL ###
+### Instruções para rodar a Questão 3 ###
+#### Importar o arquivo de SQL ####
 ```
 Questao3/sql.sql
 ```
+
+#### Editar o arquivo ```Questao3/config.ini``` ####
+```php
+driver = mysql
+host = localhost
+schema = teste
+username = root
+password = root
+```
+
+#### Subir o servidor pelo PHP ####
+```bash
+$ php -S localhost:8000 -t Questao3/
+```
+
 #### Para rodar os testes da Questão 3 ####
 ```bash
 $ vendor/bin/phpunit --filter Questao3Test
@@ -38,6 +53,8 @@ $ vendor/bin/phpcs --standard=PSR1 Questao1/
 $ vendor/bin/phpcs --standard=PSR1 Questao2/
 $ vendor/bin/phpcs --standard=PSR1 Questao3/
 ```
+
+
 ### Instruções para rodar a Questão 4 ###
 #### Instalar o Docker ####
 ```
@@ -50,6 +67,11 @@ Rode esse comando dentro da pasta `Questao4`
 $ docker-compose up
 ```
 Após o download de todos os package do composer coloque o processo em background ```bash $ control + z ``` (MAC)
+ou mate o processo e rode novamente com o parametro ```-d```
+```bash
+$ docker-compose up -d
+```
+irá executar e rodar o processo em background
 
 #### Editar o arquivo ```config/app.php``` ####
 ```php
@@ -65,6 +87,17 @@ Após o download de todos os package do composer coloque o processo em backgroun
 $ docker exec task_php api/bin/cake migrations migrate
 ```
 
-##### API: http://localhost:8001 #####
-##### FrontEnd: http://localhost:8002 #####
-##### Postman Collection https://www.getpostman.com/collections/6f84bd502c766f41f3d6 #####
+##### API Restful em CakePHP 3 #####
+http://localhost:8001
+
+##### FrontEnt em VueJS #####
+http://localhost:8002
+
+##### PostMan Collection ####
+Eu uso o PostMan para desenvolver API, caso use também ou queria conhecer eu exporter todas as URL, basta instalar e depois clicar no link que ele irá importar
+
+Instalar o PostMan: https://chrome.google.com/webstore/detail/postman/fhbjgbiflinjbdggehcddcbncdddomop
+
+Collections
+
+https://www.getpostman.com/collections/6f84bd502c766f41f3d6
