@@ -56,6 +56,10 @@ $ vendor/bin/phpcs --standard=PSR1 Questao3/
 
 
 ### Instruções para rodar a Questão 4 ###
+- [x] Interface CRUD
+- [x] Drag and Drop
+- [x] Responsivo
+
 #### Instalar o Docker ####
 ```
 https://www.docker.com/products/docker
